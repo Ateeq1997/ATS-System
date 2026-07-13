@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(npm run *)",
+      "Bash(nohup uvicorn index:app --port 8000)",
+      "Bash(echo \"started uvicorn pid $!\")",
+      "Bash(curl -s http://127.0.0.1:8000/api/health)",
+      "Read(//c/Users/FAIZCO~1/AppData/Local/Temp/claude/d--Office-new/6d06ba69-575e-481e-a3fe-e532baecede3/scratchpad/pw/**)",
+      "Bash(npx playwright *)",
+      "Bash(find \"/c/Users/Faiz Computers/AppData/Local/ms-playwright/chromium-1228\" -iname \"*.exe\" 2>&1)",
+      "Read(//c/Users/Faiz Computers/AppData/Local/ms-playwright/chromium-1228/**)",
+      "Bash(curl -s http://127.0.0.1:8000/api/history/783f20ae-51ab-49a7-856d-102ceaaa85f9)",
+      "Bash(kill -9 950)",
+      "Bash(echo \"backend pid $!\")",
+      "Bash(nohup npm run dev)",
+      "Bash(echo \"frontend pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"5173: %{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(curl -s -o /dev/null -w \"5174: %{http_code}\\\\n\" http://localhost:5174/)",
+      "Bash(ls \"/c/Users/FAIZCO~1/AppData/Local/Temp/claude/d--Office-new/6d06ba69-575e-481e-a3fe-e532baecede3/scratchpad/pw/node_modules\" 2>&1 | head -5 *)",
+      "Read(//c/Users/FAIZCO~1/AppData/Local/Temp/claude/d--Office-new/6d06ba69-575e-481e-a3fe-e532baecede3/scratchpad/pw//**)",
+      "Bash(ls \"/c/Users/Faiz Computers/AppData/Local/ms-playwright/\" 2>&1)",
+      "Read(//c/Users/Faiz Computers/AppData/Local/ms-playwright//**)",
+      "Bash(npm init *)",
+      "Bash(npm install *)"
+    ]
+  }
+}

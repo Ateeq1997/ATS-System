@@ -1,0 +1,12 @@
+node_modules/
+frontend/dist/
+frontend/.vite/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.local
+.vercel/
+api/storage/resume_history.json
+.DS_Store
