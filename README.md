@@ -67,9 +67,14 @@ cd api
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 pip install -r requirements-dev.txt
-python -m spacy download en_core_web_sm   # optional, improves tokenization
 uvicorn index:app --reload --port 8000
 ```
+
+Tokenization uses a built-in regex fallback by default. If you want spaCy-based
+lemmatization locally, `pip install spacy` and
+`python -m spacy download en_core_web_sm` — `text_processing.py` will pick it
+up automatically if present. It's intentionally left out of
+`requirements.txt` so it never affects the Vercel deployment (see below).
 
 ### Frontend
 
@@ -99,10 +104,13 @@ falls back to a heuristic analysis derived from the ATS score.
   function instance** — fine for a demo/portfolio project, but not durable
   storage. For persistence across deploys/cold starts, swap `json_storage.py`
   for a real database (e.g. Vercel Postgres, Supabase, or a KV store).
-- `spaCy`'s `en_core_web_sm` model is not installed automatically by
-  `requirements.txt` (it would push the deployment past Vercel's serverless
-  size limits). `text_processing.py` detects this and transparently falls
-  back to a regex-based tokenizer, so the app works either way.
+- `spaCy` is intentionally **not** in `requirements.txt` — it's a large
+  compiled package whose exact-pinned wheels aren't guaranteed to be available
+  for whatever Python version/platform Vercel's build image resolves against,
+  which can break `uv`'s dependency resolution during deploy. `text_processing.py`
+  detects its absence and transparently falls back to a regex-based tokenizer,
+  so the app works identically either way — see "Local Development" above if
+  you want it locally.
 - Uploaded PDFs are processed in-memory only and are never written to disk.
 - The Python runtime version is pinned via `.python-version` at the repo root.
 
