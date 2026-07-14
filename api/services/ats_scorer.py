@@ -1,13 +1,17 @@
 """ATS scoring engine: keyword matching, skills gap analysis and an overall
 match percentage computed via TF-IDF cosine similarity between the resume
 and the (optional) job description.
+
+TF-IDF/cosine-similarity is implemented in pure Python (no scikit-learn)
+since it's just two documents being compared — this avoids a heavy compiled
+dependency whose wheels aren't reliably importable in minimal serverless
+Linux runtimes (e.g. missing libgomp for scikit-learn's OpenMP-linked wheels).
 """
 from __future__ import annotations
 
+import math
 import re
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+from collections import Counter
 
 from models.schemas import ATSScoreResult, RadarDatum, SkillCategoryDistribution
 from utils.skills_db import SKILL_CATEGORIES, all_skills, category_for_skill
@@ -39,15 +43,41 @@ def _formatting_score(resume_text: str) -> float:
     return max(0.0, min(100.0, score))
 
 
+def _tfidf_vector(tokens: list[str], doc_freq: dict[str, int], n_docs: int) -> dict[str, float]:
+    counts = Counter(tokens)
+    total = len(tokens)
+    vector = {}
+    for term, count in counts.items():
+        tf = count / total
+        idf = math.log((n_docs + 1) / (doc_freq[term] + 1)) + 1  # smoothed idf
+        vector[term] = tf * idf
+    return vector
+
+
+def _cosine_similarity(vec_a: dict[str, float], vec_b: dict[str, float]) -> float:
+    dot = sum(value * vec_b.get(term, 0.0) for term, value in vec_a.items())
+    norm_a = math.sqrt(sum(value * value for value in vec_a.values()))
+    norm_b = math.sqrt(sum(value * value for value in vec_b.values()))
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
 def _tfidf_similarity(resume_text: str, job_text: str) -> float:
     if not job_text.strip():
         return 0.0
-    vectorizer = TfidfVectorizer(stop_words="english")
-    try:
-        matrix = vectorizer.fit_transform([resume_text, job_text])
-    except ValueError:
+    resume_tokens = tokenize(resume_text)
+    job_tokens = tokenize(job_text)
+    if not resume_tokens or not job_tokens:
         return 0.0
-    similarity = cosine_similarity(matrix[0:1], matrix[1:2])[0][0]
+
+    docs = [resume_tokens, job_tokens]
+    vocab = set(resume_tokens) | set(job_tokens)
+    doc_freq = {term: sum(1 for doc in docs if term in doc) for term in vocab}
+
+    resume_vector = _tfidf_vector(resume_tokens, doc_freq, len(docs))
+    job_vector = _tfidf_vector(job_tokens, doc_freq, len(docs))
+    similarity = _cosine_similarity(resume_vector, job_vector)
     return float(round(similarity * 100, 2))
 
 

@@ -10,9 +10,9 @@ serverless function.
 ## Tech Stack
 
 **Frontend:** React, TypeScript, Tailwind CSS, Framer Motion, Recharts, React Router
-**Backend:** FastAPI, Pydantic, PyPDF2, spaCy, scikit-learn, Google Generative AI (Gemini)
+**Backend:** FastAPI, Pydantic, PyPDF2, Google Generative AI (Gemini) — keyword/TF-IDF matching is pure Python, no compiled ML dependencies
 **Storage:** JSON file (`resume_history.json`) — no database required
-**Deployment:** Vercel (`@vercel/static-build` + `@vercel/python`)
+**Deployment:** Vercel (`buildCommand`/`outputDirectory` for the frontend + zero-config `/api` Python function)
 
 ## Project Structure
 
@@ -111,6 +111,12 @@ falls back to a heuristic analysis derived from the ATS score.
   detects its absence and transparently falls back to a regex-based tokenizer,
   so the app works identically either way — see "Local Development" above if
   you want it locally.
+- `scikit-learn` is also intentionally **not** a dependency — its compiled
+  wheels link against OpenMP (`libgomp`), which the minimal Linux runtime
+  Vercel's Python functions run on doesn't ship by default, causing an
+  `ImportError` on every single invocation. The TF-IDF cosine-similarity used
+  for job-match scoring is implemented in pure Python instead
+  (`ats_scorer.py`), so there's no compiled ML dependency in the deploy at all.
 - Uploaded PDFs are processed in-memory only and are never written to disk.
 - The Python runtime version is pinned via `.python-version` at the repo root.
 
