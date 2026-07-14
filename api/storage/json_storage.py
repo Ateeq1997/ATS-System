@@ -1,9 +1,12 @@
 """Simple JSON file storage for resume analysis history.
 
-Vercel serverless functions only guarantee a writable /tmp directory, so we
-persist there in production and fall back to a local file during local
-development. Storage is intentionally simple (read-modify-write whole file)
-since expected volume is low (single-user demo app).
+Some serverless platforms (e.g. Vercel) only guarantee a writable /tmp
+directory, while conventional hosts (e.g. Render) allow writing next to the
+app code. Rather than hardcoding a platform check, we probe whether the
+local storage directory is actually writable and fall back to /tmp if not,
+so the same code works unmodified across hosts. Storage is intentionally
+simple (read-modify-write whole file) since expected volume is low
+(single-user demo app).
 """
 from __future__ import annotations
 
@@ -18,9 +21,10 @@ _MAX_HISTORY_ITEMS = 200
 
 
 def _storage_path() -> str:
-    if os.environ.get("VERCEL"):
-        return "/tmp/resume_history.json"
-    return os.path.join(os.path.dirname(__file__), "resume_history.json")
+    local_dir = os.path.dirname(__file__)
+    if os.access(local_dir, os.W_OK):
+        return os.path.join(local_dir, "resume_history.json")
+    return "/tmp/resume_history.json"
 
 
 def _read_all() -> list[dict[str, Any]]:

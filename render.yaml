@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ats-system-api
+    runtime: python
+    plan: free
+    rootDir: api
+    buildCommand: pip install -r requirements-dev.txt
+    startCommand: uvicorn index:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: CORS_ORIGINS
+        value: "*"
