@@ -91,51 +91,24 @@ Copy `.env.example` to `.env` in the project root (for the API) and set
 `GEMINI_API_KEY` if you want live AI analysis; otherwise the app automatically
 falls back to a heuristic analysis derived from the ATS score.
 
-## Deploying (two options)
+## Deploying to Vercel
 
-### Option A: Split hosting — Cloudflare Pages + Render (recommended)
-
-Each platform does one simple, well-supported job instead of one platform
-juggling both a static site and a Python serverless function.
-
-**Backend (Render):**
-1. Push this repo to GitHub.
-2. In Render, "New +" → "Blueprint" → select this repo. Render reads
-   `render.yaml` at the repo root automatically (root dir `api`, install via
-   `requirements-dev.txt`, start via `uvicorn index:app`).
-3. Set the `GEMINI_API_KEY` environment variable in the Render dashboard
-   (left blank in `render.yaml` on purpose — it's a secret).
-4. Deploy. Note the resulting URL, e.g. `https://ats-system-api.onrender.com`.
-   Render's free tier spins down after ~15 minutes of inactivity — the first
-   request after idling takes 30-50s to cold-start; fine for a portfolio demo.
-
-**Frontend (Cloudflare Pages):**
-1. In Cloudflare Pages, create a project from the same GitHub repo.
-2. Framework preset: **Vite**. Root directory: `frontend`. Build command:
-   `npm run build`. Build output directory: `dist`.
-3. Add environment variable `VITE_API_BASE_URL` = your Render URL + `/api`
-   (e.g. `https://ats-system-api.onrender.com/api`).
-4. Deploy. `frontend/public/_redirects` (copied into the build output
-   automatically by Vite) tells Cloudflare Pages to serve `index.html` for
-   any path, so React Router's client-side routes work correctly.
-
-With frontend and backend on different domains, CORS matters: `render.yaml`
-sets `CORS_ORIGINS=*` by default so this works out of the box; restrict it to
-your exact Cloudflare Pages URL once you have it if you want tighter CORS.
-
-### Option B: Single domain on Vercel
+Single deployment: `vercel.json`'s `buildCommand`/`outputDirectory` build
+`frontend/` as a static site, `api/index.py` is auto-detected as a Python
+serverless function, and `rewrites` route `/api/*` to it with everything
+else falling back to the SPA (`index.html`) for React Router.
 
 1. Push this repository to GitHub.
 2. Import the repo in Vercel.
-3. In the project's **Settings → Build and Deployment**, make sure Build
-   Command / Output Directory / Install Command **Override toggles are OFF**
-   — otherwise dashboard settings silently take priority over `vercel.json`.
+3. **Critical step** — in the project's **Settings → Build and Deployment**,
+   make sure the Override toggle next to Build Command, Output Directory, and
+   Install Command are all **OFF**. If any is ON, that dashboard value
+   silently wins over `vercel.json` and the deploy will break in ways that
+   look unrelated to the actual cause. This is the single most common way
+   this specific setup fails.
 4. Set the environment variable `GEMINI_API_KEY` (and optionally
    `GEMINI_MODEL`, `CORS_ORIGINS`) in the Vercel project settings.
-5. Deploy — `vercel.json`'s `buildCommand`/`outputDirectory` build `frontend/`
-   as a static site, `api/index.py` is auto-detected as a Python serverless
-   function, and `rewrites` route `/api/*` to it with everything else falling
-   back to the SPA.
+5. Deploy.
 
 ### Notes & constraints
 
